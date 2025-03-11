@@ -607,7 +607,7 @@ print_results <- function(comp_results) {
     print(sum_results)
     
     cat("\n")
-    # sink()
+    sink()
     # 
     # texname = paste0("Comp_", name_config, "_", dim_config, "d", name_to_maximize, name_append, "_tex.txt")
     # 
