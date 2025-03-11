@@ -4,6 +4,7 @@
 # By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, Guodong Zhang, and Yu Zhang
 # Date: March 10, 2025
 # GitHub Repository Maintained by: Wayne Yuan Gao
+# For questions, comments, and bug reports, contact: waynegao@upenn.edu
 
 # This Rscript is a self-contained R Implementation of the SMCO Algorithm
 # This Rscript contains the following functions:
