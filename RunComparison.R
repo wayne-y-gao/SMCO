@@ -4,6 +4,7 @@
 # By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, Guodong Zhang, and Yu Zhang
 # Date: March 10, 2025
 # GitHub Repository Maintained by: Wayne Yuan Gao
+# For quesions, comments, and bug reports, contact: waynegao@upenn.edu
 
 # This Rscript:
 # (i) runs comparisons of SMCO algorithm with a List of other optimization algorithms
