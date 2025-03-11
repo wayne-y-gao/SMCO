@@ -3,7 +3,8 @@ This GitHub repository contains R source code for:
 Paper: "Optimization via Strategic Law of Large Numbers"
 By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, Guodong Zhang, and Yu Zhang
 Date: March 10, 2025
-GitHub Repository Maintained by: Wayne Yuan Gao (waynegao@upenn.edu)
+GitHub Repository Maintained by: Wayne Yuan Gao
+For quesions, comments, and bug reports, contact: waynegao@upenn.edu
 
 
 Core Rscripts:
