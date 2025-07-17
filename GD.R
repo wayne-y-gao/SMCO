@@ -1,4 +1,4 @@
-# Numerical Gradient Descent Optimizer
+# Numerical Gradient Descent Optimizer 
 
 #' Calculate numerical gradient
 #' @param f Function to optimize
