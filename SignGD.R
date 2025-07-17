@@ -1,4 +1,4 @@
-# Sign Gradient Descent Optimizer Implementation
+# Sign Gradient Descent Optimizer Implementation 
 
 #' Calculate numerical gradient
 #' @param f Function to optimize
