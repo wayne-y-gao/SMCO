@@ -33,7 +33,7 @@ spsa <- function(f, startpoint, bounds_lower, bounds_upper, A, a, c, alpha = 0.6
     # compute grad
     g_hat <- (f_plus - f_minus)/(2*ck*delta)
     # update x
-    x_current <- x_current + ak * g_hat
+    x_current <- x_current - ak * g_hat
     # control
     x_current[x_current > upper_bounds] <- upper_bounds[x_current > upper_bounds]
     x_current[x_current < lower_bounds] <- lower_bounds[x_current < lower_bounds]

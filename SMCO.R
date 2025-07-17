@@ -2,9 +2,8 @@
 
 # "Optimization via Strategic Law of Large Numbers"
 # By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, Guodong Zhang, and Yu Zhang
-# Date: March 10, 2025
+# Date: July 15, 2025
 # GitHub Repository Maintained by: Wayne Yuan Gao
-# For questions, comments, and bug reports, contact: waynegao@upenn.edu
 
 # This Rscript is a self-contained R Implementation of the SMCO Algorithm
 # This Rscript contains the following functions:
@@ -18,33 +17,24 @@
 #           without additional refinement/boosting.
 
 # Helper functions:
-# (5) "generate_start_points": generate multiple starting points using the Latin Hypercube Sampling procedure
+# (5) "generate_sobol_points": generate multiple Sobol starting points
 # (6) "check_bounds": check and enforce bound constraints
 # (7) "compute_partial_signs": compute partial finite differences used in the SMCO algorithm
 
 # Example usage at the end of Rscript
 
 #####################################
-# Generate diverse starting points using Latin Hypercube Sampling
-generate_start_points <- function(n_starts, bounds_lower, bounds_upper, seed = NULL) {
+# Generate diverse Sobol starting points
+generate_sobol_points <- function(n_starts, bounds_lower, bounds_upper, seed = NULL) {
+  library(qrng)
   if (!is.null(seed)) set.seed(seed)
-
-  d <- length(bounds_lower)
-  points <- matrix(0, nrow = n_starts, ncol = d)
-
-  # Pre-calculate segments
-  segments <- seq(0, 1, length.out = n_starts + 1)
-  lower_segs <- segments[-length(segments)]
-  upper_segs <- segments[-1]
-
-  # Latin Hypercube Sampling
-  for (i in 1:d) {
-    # Vectorized sampling from segments
-    points[, i] <- lower_segs + runif(n_starts) * (upper_segs - lower_segs)
-    # Scale to bounds
-    points[, i] <- bounds_lower[i] + points[, i] * (bounds_upper[i] - bounds_lower[i])
+  
+  d = length(bounds_lower)
+  sobol_points <- sobol(n_starts, d = d)
+  points <- matrix(NA, nrow = n_starts, ncol = d)
+  for (j in 1:d) {
+    points[,j] <- bounds_lower[j] + sobol_points[,j] * (bounds_upper[j] - bounds_lower[j])
   }
-
   return(points)
 }
 
@@ -63,7 +53,7 @@ compute_partial_signs <- function(f, x, fx, h_step, bounds_lower, bounds_upper,
   d <- length(x)
   
   if (is.null(h_step)) {
-    h_step <- rep(1e-7, d)
+    h_step <- rep(1e-8, d)
   }
   
   partial_signs <- numeric(d)
@@ -156,7 +146,7 @@ SMCO_single <- function(f, bounds_lower, bounds_upper, start_point,
     # Implement deterministic pushout or random deviation from bounds
     bound_out <- bounds_buffer * bounds_diff
     if (buffer_rand) { # for random deviation from bounds
-      bound_out <- bound_out * runif(1, -1, 1)
+      bound_out <- bound_out * runif(d, -1, 1)
     }
     bounds_upper_out <- bounds_upper + bound_out
     bounds_lower_out <- bounds_lower - bound_out
@@ -353,7 +343,7 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
   
   # if (is.null(start_points)) {
   #   n_starts = opt_control$n_starts
-  #   start_points <- generate_start_points(n_starts, bounds_lower, bounds_upper, opt_control$seed)
+  #   start_points <- generate_sobol_points(n_starts, bounds_lower, bounds_upper, opt_control$seed)
   # } else {
     n_starts = nrow(start_points)
     # start_points <- as.matrix(start_points)
@@ -422,7 +412,7 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
 library(compiler)
 
 # Compile the core computation functions
-generate_start_points <- cmpfun(generate_start_points)
+generate_sobol_points <- cmpfun(generate_sobol_points)
 compute_partial_signs <- cmpfun(compute_partial_signs)
 check_bounds <- cmpfun(check_bounds)
 SMCO_single <- cmpfun(SMCO_single)
