@@ -372,11 +372,11 @@ config_qing <- function(d) {
       #bounds = rep(list(c(-600, 600)), d),
       bounds_lower = rep(-600,d),
       bounds_upper = rep(600, d),
-      # f_max = 902, # From Claude
+      # f_max = 902,
       # bounds = rep(list(c(-60, 60)), d),
-      # f_max = 10, # From Claude
+      # f_max = 10, 
       # bounds = rep(list(c(-6, 6)), d),
-      # f_max = 1.774, # From Claude      
+      # f_max = 1.774,    
       f_min = 0,
       f_max = NA
     )
