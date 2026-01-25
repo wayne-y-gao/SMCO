@@ -1,8 +1,14 @@
-# Supplemental Test Functions
-
-# "Optimization via Strategic Law of Large Numbers"
+# Test Functions for SMCO Benchmarking
+# Version: 1.1.0
+# Release Date: January 25, 2026
+#
+# Strategic Monte Carlo Optimization (SMCO) Algorithm
 # By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, and Guodong Zhang
-# Date: July 15, 2025
+#
+# Citation: X. Chen, Z. Chen, W.Y. Gao, X. Yan, & G. Zhang, Optimization via the strategic law
+#   of large numbers, Proc. Natl. Acad. Sci. U.S.A. 123 (4) e2519845123,
+#   https://doi.org/10.1073/pnas.2519845123 (2026).
+#
 # GitHub Repository Maintained by: Wayne Yuan Gao
 
 # Coding of the following test functions are retrieved from:
@@ -587,7 +593,6 @@ config_rosen <- function(d) {
     } else if (name == "Mishra06") {
       test_config <- config_mish06
     } else if (name == "ANN") {
-      source("testfunc_NN1L.R")
       test_config <- config_ANN(opt_config$input_dim, opt_config$hidden_dim, opt_config$n,
                                 opt_config$use_truth, opt_config$noise_sigma, opt_config$seed)
     } else {
@@ -595,3 +600,121 @@ config_rosen <- function(d) {
     }
     return(test_config)
   }
+
+
+#####################################
+# Neural Network (ANN) Test Functions
+#####################################
+
+# ReLU activation function
+relu <- function(x) {
+  matrix(pmax(0, x), nrow = nrow(x), ncol = ncol(x))
+}
+
+# Initialize neural network parameters
+initialize_nn <- function(input_dim, hidden_dim) {
+  list(
+    W1 = matrix(runif(input_dim * hidden_dim, -4, 4), nrow = input_dim, ncol = hidden_dim),
+    b1 = matrix(runif(hidden_dim, 0, 8), nrow = 1, ncol = hidden_dim),
+    W2 = matrix(runif(hidden_dim, -4, 4), nrow = hidden_dim, ncol = 1),
+    b2 = matrix(runif(1, -4, 4), nrow = 1, ncol = 1)
+  )
+}
+
+# Forward pass through neural network
+forward_pass <- function(model, x) {
+  Z1 <- x %*% model$W1 + matrix(rep(model$b1, nrow(x)), nrow = nrow(x), byrow = TRUE)
+  A1 <- relu(Z1)
+  Z2 <- A1 %*% model$W2 + matrix(rep(model$b2, nrow(A1)), nrow = nrow(A1), byrow = TRUE)
+  list(Z1 = Z1, A1 = A1, Z2 = Z2)
+}
+
+# Generate synthetic data from neural network
+generate_data <- function(n, true_model, noise_sigma) {
+  input_dim <- nrow(true_model$W1)
+  x <- matrix(runif(n * input_dim, -4, 4), nrow = n, ncol = input_dim)
+  y <- forward_pass(true_model, x)$Z2 + noise_sigma * rnorm(n)
+  y <- matrix(y, nrow = n, ncol = 1)
+  list(x = x, y = y)
+}
+
+# Convert model to parameter vector
+model_to_param <- function(model) {
+  input_dim <- nrow(model$W1)
+  hidden_dim <- ncol(model$W1)
+  W1vec <- matrix(model$W1, nrow = input_dim * hidden_dim, ncol = 1)
+  b1vec <- matrix(model$b1, nrow = hidden_dim, ncol = 1)
+  W2vec <- matrix(model$W2, nrow = hidden_dim, ncol = 1)
+  rbind(W1vec, b1vec, W2vec, model$b2)
+}
+
+# Convert parameter vector to model
+param_to_model <- function(params, input_dim, hidden_dim) {
+  d <- length(params)
+  d_W1 <- input_dim * hidden_dim
+  d_b1 <- hidden_dim
+  d_W2 <- hidden_dim
+  d_b2 <- 1
+  if (d != d_W1 + d_b1 + d_W2 + d_b2) {
+    stop("Error: dimension of parameter does not match model dimension")
+  }
+  W1 <- matrix(params[1:d_W1], nrow = input_dim, ncol = hidden_dim)
+  b1 <- matrix(params[(d_W1 + 1):(d_W1 + d_b1)], nrow = 1, ncol = hidden_dim)
+  W2 <- matrix(params[(d_W1 + hidden_dim + 1):(d - 1)], nrow = hidden_dim, ncol = 1)
+  b2 <- matrix(params[d], nrow = 1, ncol = 1)
+  list(W1 = W1, b1 = b1, W2 = W2, b2 = b2)
+}
+
+# MSE loss function for ANN
+MSE_ANN <- function(params, input_dim, hidden_dim, x, y) {
+  model <- param_to_model(params, input_dim, hidden_dim)
+  model_predict <- forward_pass(model, x)$Z2
+  mean((model_predict - y)^2)
+}
+
+# Setup ANN test problem
+setup_ANN <- function(input_dim, hidden_dim, n, use_truth, noise_sigma, seed) {
+  true_model <- initialize_nn(input_dim, hidden_dim)
+  data <- generate_data(n, true_model, noise_sigma)
+  true_predict <- forward_pass(true_model, data$x)$Z2
+  list(data = data, true_model = true_model, true_predict = true_predict)
+}
+
+# Configuration for ANN test function
+config_ANN <- function(input_dim, hidden_dim, n, use_truth, noise_sigma, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+
+  ANN_setup <- setup_ANN(input_dim, hidden_dim, n, use_truth, noise_sigma, seed)
+  data <- ANN_setup$data
+  y_true <- if (use_truth) ANN_setup$true_predict else data$y
+  dim <- input_dim * hidden_dim + hidden_dim + hidden_dim + 1
+
+  func <- function(params) MSE_ANN(params, input_dim, hidden_dim, data$x, y_true)
+  f_min <- if (use_truth) 0 else noise_sigma^2
+
+  list(
+    name = paste0("ANN_", input_dim, "x", hidden_dim),
+    input_dim = input_dim,
+    hidden_dim = hidden_dim,
+    n = n,
+    use_truth = use_truth,
+    noise_sigma = noise_sigma,
+    dim = dim,
+    data = ANN_setup$data,
+    true_predict = ANN_setup$true_predict,
+    true_model = ANN_setup$true_model,
+    f = func,
+    f_min = f_min,
+    f_max = NA,
+    bounds_lower = rep(-10, dim),
+    bounds_upper = rep(10, dim)
+  )
+}
+
+# Bytecode compile performance-critical functions
+if (requireNamespace("compiler", quietly = TRUE)) {
+  relu <- compiler::cmpfun(relu)
+  forward_pass <- compiler::cmpfun(forward_pass)
+  param_to_model <- compiler::cmpfun(param_to_model)
+  MSE_ANN <- compiler::cmpfun(MSE_ANN)
+}

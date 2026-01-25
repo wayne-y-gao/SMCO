@@ -1,0 +1,18 @@
+# Claude Code working directory
+.claude/
+
+# R output files
+*.RData
+*.Rhistory
+.Rhistory
+
+# Benchmark output files
+Comp_*.txt
+
+# R session files
+.RData
+.Ruserdata
+
+# IDE files
+.Rproj.user/
+*.Rproj
