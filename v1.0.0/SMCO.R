@@ -1,7 +1,7 @@
 # Strategic Monte Carlo Optimization (SMCO) Algorithm
 
 # "Optimization via Strategic Law of Large Numbers"
-# By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, Guodong Zhang, and Yu Zhang
+# By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, and Guodong Zhang
 # Date: July 15, 2025
 # GitHub Repository Maintained by: Wayne Yuan Gao
 
