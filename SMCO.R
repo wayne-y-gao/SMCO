@@ -457,7 +457,7 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
                        opt_control = list(
                          n_starts = 100,
                          iter_max = 200,
-                         iter_nstart = 1,
+                         # iter_nstart: defaults to n_starts if not provided
                          iter_boost = 0,
                          bounds_buffer = 0.05,
                          buffer_rand = FALSE,
@@ -474,10 +474,10 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
   validate_smco_inputs(f, bounds_lower, bounds_upper, start_points, opt_control)
 
   # Set defaults for any missing opt_control parameters
+  # NOTE: iter_nstart is intentionally omitted - it defaults to n_starts if not provided (see below)
   default_control <- list(
     n_starts = 100,
     iter_max = 200,
-    iter_nstart = 1,
     iter_boost = 0,
     bounds_buffer = 0.05,
     buffer_rand = FALSE,
