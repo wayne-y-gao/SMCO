@@ -25,7 +25,7 @@
 #                  "Mishra06", "EggHolder", "Six-Hump Camel"
 
 name_config <- "Rastrigin"  # Test function name
-dim_config <- 10            # Dimension (ignored for fixed 2D functions)
+dim_config <- 50            # Dimension (ignored for fixed 2D functions)
 
 # Benchmark settings
 n_replications <- 10        # Number of Monte Carlo replications
@@ -33,11 +33,11 @@ random_seed <- 123          # Random seed for reproducibility
 
 # SMCO configuration
 SMCO_options <- list(
-  n_starts = 32,            # Number of starting points
-  iter_max = 200,           # Maximum iterations per start
+  n_starts = max(5,round(sqrt(dim_config))),            # Number of starting points
+  iter_max = 500,           # Maximum iterations per start
   bounds_buffer = 0.05,     # Bounds extension factor
   buffer_rand = TRUE,       # Randomize bounds extension
-  tol_conv = 1e-8,          # Convergence tolerance
+  tol_conv = 1e-6,          # Convergence tolerance
   refine_search = TRUE,     # Enable refinement phase
   refine_ratio = 0.5,       # Fraction of iterations for refinement
   partial_option = "center",# "center" (two-sided) or "forward" (one-sided)
