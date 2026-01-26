@@ -629,22 +629,10 @@ if (FALSE) {
   bounds_lower <- c(-5, -5)
   bounds_upper <- c(5, 5)
 
-  # Run the optimization
+  # Run the optimization (using defaults: n_starts = max(5, sqrt(dim)), iter_max = 500)
   time_start <- Sys.time()
   result <- SMCO_multi(f, bounds_lower, bounds_upper,
                        opt_control = list(
-                         n_starts = 100,
-                         iter_max = 200,
-                         iter_nstart = 1,
-                         iter_boost = 0,
-                         bounds_buffer = 0.05,
-                         buffer_rand = FALSE,
-                         tol_conv = 1e-8,
-                         refine_search = TRUE,
-                         refine_ratio = 0.55,
-                         partial_option = "center",
-                         use_runmax = TRUE,
-                         use_parallel = FALSE,
                          verbose = TRUE,
                          seed = 123))
   time_end <- Sys.time()
