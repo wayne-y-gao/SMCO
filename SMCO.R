@@ -455,8 +455,8 @@ SMCO_single_boost <- function(f, bounds_lower, bounds_upper, start_point,
 # Optimized multi-start function
 SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
                        opt_control = list(
-                         n_starts = 100,
-                         iter_max = 200,
+                         n_starts = NULL,  # defaults to max(5, sqrt(dim)) if not provided
+                         iter_max = 500,
                          # iter_nstart: defaults to n_starts if not provided
                          iter_boost = 0,
                          bounds_buffer = 0.05,
@@ -474,10 +474,9 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
   validate_smco_inputs(f, bounds_lower, bounds_upper, start_points, opt_control)
 
   # Set defaults for any missing opt_control parameters
-  # NOTE: iter_nstart is intentionally omitted - it defaults to n_starts if not provided (see below)
+  # NOTE: n_starts and iter_nstart are intentionally omitted - they default dynamically (see below)
   default_control <- list(
-    n_starts = 100,
-    iter_max = 200,
+    iter_max = 500,
     iter_boost = 0,
     bounds_buffer = 0.05,
     buffer_rand = FALSE,
@@ -494,6 +493,12 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
     if (is.null(opt_control[[name]])) {
       opt_control[[name]] <- default_control[[name]]
     }
+  }
+
+  # Set default n_starts based on dimension if not provided
+  if (is.null(opt_control$n_starts)) {
+    d <- length(bounds_lower)
+    opt_control$n_starts <- max(5, round(sqrt(d)))
   }
 
   # Generate diverse starting points if not provided
