@@ -1,5 +1,6 @@
 # Strategic Monte Carlo Optimization (SMCO) Algorithm
-# Version 1.1.0 - Performance Optimized
+# Version 1.1.0 - Quality Enhancements
+######################################
 
 # "Optimization via Strategic Law of Large Numbers"
 # By: Xiaohong Chen, Zengjing Chen, Wayne Yuan Gao, Xiaodong Yan, and Guodong Zhang

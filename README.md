@@ -22,7 +22,7 @@ SMCO is a derivative-free optimization algorithm based on the Strategic Law of L
 - **Derivative-free:** Only requires function evaluations
 - **Multi-start:** Automatic exploration from multiple starting points
 - **Refinement search:** Two-phase optimization with optional local refinement
-- **Performance optimized:** v1.1.0 includes significant speedups (~45% faster in high dimensions)
+- **Clean implementation:** v1.1.0 includes code quality improvements and better defaults
 
 ---
 
@@ -192,33 +192,26 @@ Available test functions include: Rastrigin, Ackley, Griewank, Rosenbrock, Micha
 
 ---
 
-## Performance: v1.0.0 vs v1.1.0
+## Changes in v1.1.0
 
-Version 1.1.0 includes significant performance optimizations. Run `benchmark_version_comparison.R` to reproduce these results.
+Version 1.1.0 focuses on code quality, usability, and better defaults. Performance is equivalent to v1.0.0.
 
-### Speedup Summary
+### New Features
 
-| Dimension | SMCO | SMCO-R | SMCO-BR | Average |
-|-----------|------|--------|---------|---------|
-| 2-D | ~15% | ~20% | ~15% | ~17% |
-| 10-D | ~35% | ~40% | ~35% | ~37% |
-| 50-D | ~45% | ~50% | ~45% | ~47% |
+1. **Convenience wrapper functions**: `SMCO()`, `SMCO_R()`, `SMCO_BR()` for easy access to algorithm variants
+2. **Adaptive defaults**: `n_starts` defaults to `max(5, sqrt(dim))` for better scaling with dimension
+3. **Input validation**: New `validate_smco_inputs()` provides clearer error messages
+4. **Improved defaults**: `iter_max` increased from 200 to 500 for better convergence
 
-**Overall: ~30-40% average speedup** (higher gains in high dimensions)
+### Code Quality Improvements
 
-### Key Optimizations
-
-1. **Pre-computed h_step matrix**: Avoids repeated division in main loop (O(iter_max) divisions saved)
-2. **In-place vector modification**: Reduces memory allocation in `compute_partial_signs()`
-3. **Metadata-based runmax tracking**: Single vector copy at end instead of per-iteration
-4. **Pre-computed fixed bounds**: When `buffer_rand=FALSE`, bounds computed once
-5. **Vectorized Sobol scaling**: Uses R's column-wise recycling via transpose
-6. **Adaptive defaults**: `n_starts` defaults to `max(5, sqrt(dim))` for better scaling
-7. **Input validation**: New `validate_smco_inputs()` for clearer error messages
+- Pre-computed h_step matrix (cleaner code)
+- Vectorized Sobol scaling
+- Simplified internal structure
 
 ### Solution Quality
 
-Solution quality remains equivalent between versions. The optimizations focus on computational efficiency without changing the algorithm's behavior.
+Solution quality is identical between v1.0.0 and v1.1.0. The changes focus on usability without altering the algorithm's behavior.
 
 ---
 

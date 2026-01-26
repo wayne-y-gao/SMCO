@@ -9,8 +9,12 @@
 #   of large numbers, Proc. Natl. Acad. Sci. U.S.A. 123 (4) e2519845123,
 #   https://doi.org/10.1073/pnas.2519845123 (2026).
 #
-# This script benchmarks SMCO on standard test functions.
-# Users can configure the test function, dimension, and SMCO parameters below.
+# This script benchmarks all three SMCO variants on standard test functions:
+#   - SMCO:    Base algorithm (fastest, good for initial exploration)
+#   - SMCO_R:  With refinement phase (balanced speed/accuracy)
+#   - SMCO_BR: With boosted refinement (most accurate, slower)
+#
+# Users can configure the test function, dimension, and shared SMCO parameters below.
 
 #####################################
 # USER CONFIGURATION
@@ -31,15 +35,13 @@ dim_config <- 50            # Dimension (ignored for fixed 2D functions)
 n_replications <- 10        # Number of Monte Carlo replications
 random_seed <- 123          # Random seed for reproducibility
 
-# SMCO configuration
+# Shared SMCO configuration (variant-specific settings are defined internally)
 SMCO_options <- list(
-  n_starts = max(5,round(sqrt(dim_config))),            # Number of starting points
+  n_starts = max(5, round(sqrt(dim_config))),  # Number of starting points
   iter_max = 500,           # Maximum iterations per start
   bounds_buffer = 0.05,     # Bounds extension factor
   buffer_rand = TRUE,       # Randomize bounds extension
   tol_conv = 1e-6,          # Convergence tolerance
-  refine_search = TRUE,     # Enable refinement phase
-  refine_ratio = 0.5,       # Fraction of iterations for refinement
   partial_option = "center",# "center" (two-sided) or "forward" (one-sided)
   use_runmax = TRUE,        # Track running maximum
   use_parallel = FALSE,     # Enable parallel execution
@@ -49,7 +51,6 @@ SMCO_options <- list(
 # ANN-specific configuration (only used if name_config = "ANN")
 ANN_options <- list(
   input_dim = 3,            # Number of input features
-
   hidden_dim = 5,           # Number of hidden neurons
   n = 500,                  # Number of training samples
   use_truth = FALSE,        # Use noiseless target (TRUE) or noisy (FALSE)
@@ -61,7 +62,7 @@ ANN_options <- list(
 #####################################
 
 cat("==============================================\n")
-cat("SMCO Benchmark\n")
+cat("SMCO Benchmark - All Variants\n")
 cat("==============================================\n\n")
 
 # Load required packages
@@ -73,6 +74,25 @@ library(qrng)
 # Source SMCO algorithm and test functions
 source("SMCO.R")
 source("testfuncs.R")
+
+# Define SMCO variants
+# Each variant specifies its unique settings; shared settings come from SMCO_options
+variants <- list(
+  SMCO = list(
+    refine_search = FALSE,
+    iter_boost = 0
+  ),
+  SMCO_R = list(
+    refine_search = TRUE,
+    refine_ratio = 0.5,
+    iter_boost = 0
+  ),
+  SMCO_BR = list(
+    refine_search = TRUE,
+    refine_ratio = 0.5,
+    iter_boost = 1000
+  )
+)
 
 # Helper function: generate uniform starting points
 generate_unif_starts <- function(n_starts, bounds_lower, bounds_upper) {
@@ -105,12 +125,12 @@ cat("  Replications:", n_replications, "\n")
 cat("  n_starts:", SMCO_options$n_starts, "\n")
 cat("  iter_max:", SMCO_options$iter_max, "\n")
 cat("  True minimum:", ifelse(is.na(test_config$f_min), "unknown", test_config$f_min), "\n")
-cat("  True maximum:", ifelse(is.na(test_config$f_max), "unknown", test_config$f_max), "\n\n")
+cat("  True maximum:", ifelse(is.na(test_config$f_max), "unknown", test_config$f_max), "\n")
+cat("\nVariants to test: SMCO, SMCO_R, SMCO_BR\n\n")
 
-# Run benchmark for minimization
-run_benchmark <- function(to_maximize) {
-  direction <- if (to_maximize) "MAXIMIZATION" else "MINIMIZATION"
-  cat("Running", direction, "benchmark...\n")
+# Run benchmark for a specific variant and direction
+run_benchmark <- function(variant_name, variant_settings, to_maximize) {
+  direction <- if (to_maximize) "max" else "min"
 
   if (to_maximize) {
     test_func_opt <- test_func
@@ -120,23 +140,25 @@ run_benchmark <- function(to_maximize) {
     true_opt <- test_config$f_min
   }
 
+  # Merge shared options with variant-specific settings
+  opt_control <- SMCO_options
+  for (key in names(variant_settings)) {
+    opt_control[[key]] <- variant_settings[[key]]
+  }
+
   time_results <- numeric(n_replications)
   fopt_results <- numeric(n_replications)
 
   set.seed(random_seed)
 
   for (i in 1:n_replications) {
-    if (i %% max(1, floor(n_replications / 5)) == 1 || i == n_replications) {
-      cat("  Replication", i, "of", n_replications, "\n")
-    }
-
-    start_points <- generate_unif_starts(SMCO_options$n_starts, bounds_lower, bounds_upper)
+    start_points <- generate_unif_starts(opt_control$n_starts, bounds_lower, bounds_upper)
 
     start_time <- Sys.time()
     results <- SMCO_multi(f = test_func_opt,
                           bounds_lower, bounds_upper,
                           start_points = start_points,
-                          opt_control = SMCO_options)
+                          opt_control = opt_control)
     end_time <- Sys.time()
 
     time_results[i] <- as.numeric(difftime(end_time, start_time, units = "secs"))
@@ -153,49 +175,93 @@ run_benchmark <- function(to_maximize) {
   if (!is.na(true_opt)) {
     AE <- abs(fopt_results - true_opt)
     rMSE <- sqrt(mean(AE^2))
-    AE_median <- median(AE)
-    AE_95 <- quantile(AE, 0.95)
   } else {
     rMSE <- NA
-    AE_median <- NA
-    AE_95 <- NA
   }
 
   return(list(
+    variant = variant_name,
     direction = direction,
     true_opt = true_opt,
     time_avg = time_avg,
     time_sd = time_sd,
     fopt_mean = fopt_mean,
     fopt_sd = fopt_sd,
-    rMSE = rMSE,
-    AE_median = AE_median,
-    AE_95 = AE_95
+    rMSE = rMSE
   ))
 }
 
-# Run benchmarks
-results_min <- run_benchmark(to_maximize = FALSE)
-results_max <- run_benchmark(to_maximize = TRUE)
+# Run all benchmarks
+cat("Running benchmarks...\n")
+all_results <- list()
 
-# Print results
-cat("\n==============================================\n")
-cat("RESULTS\n")
-cat("==============================================\n\n")
-
-print_result <- function(res) {
-  cat(res$direction, "\n")
-  cat("  True optimum:     ", ifelse(is.na(res$true_opt), "unknown", round(res$true_opt, 6)), "\n")
-  cat("  Found (mean/sd):  ", round(res$fopt_mean, 6), " / ", round(res$fopt_sd, 6), "\n")
-  if (!is.na(res$rMSE)) {
-    cat("  rMSE:             ", round(res$rMSE, 6), "\n")
-    cat("  AE median:        ", round(res$AE_median, 6), "\n")
-    cat("  AE 95th pctl:     ", round(res$AE_95, 6), "\n")
+for (variant_name in names(variants)) {
+  cat("  Testing", variant_name, "...")
+  for (to_maximize in c(FALSE, TRUE)) {
+    result <- run_benchmark(variant_name, variants[[variant_name]], to_maximize)
+    key <- paste0(variant_name, "_", result$direction)
+    all_results[[key]] <- result
   }
-  cat("  Time (mean/sd):   ", round(res$time_avg, 3), "s / ", round(res$time_sd, 3), "s\n\n")
+  cat(" done\n")
 }
 
-print_result(results_min)
-print_result(results_max)
+# Print summary tables
+cat("\n==============================================\n")
+cat("RESULTS SUMMARY\n")
+cat("==============================================\n")
 
+print_summary_table <- function(direction_label, direction_key, true_opt) {
+  cat("\n", direction_label, "\n", sep = "")
+  cat("True optimum:", ifelse(is.na(true_opt), "unknown", round(true_opt, 6)), "\n\n")
+
+  # Table header
+  cat(sprintf("%-10s %10s %14s %12s\n", "Variant", "Time (s)", "f_opt (mean)", "rMSE"))
+  cat(sprintf("%-10s %10s %14s %12s\n", "-------", "--------", "------------", "----"))
+
+  for (variant_name in names(variants)) {
+    key <- paste0(variant_name, "_", direction_key)
+    res <- all_results[[key]]
+
+    time_str <- sprintf("%.2f", res$time_avg)
+    fopt_str <- sprintf("%.6f", res$fopt_mean)
+    rmse_str <- if (is.na(res$rMSE)) "N/A" else sprintf("%.6f", res$rMSE)
+
+    cat(sprintf("%-10s %10s %14s %12s\n", variant_name, time_str, fopt_str, rmse_str))
+  }
+}
+
+# Get true optima from any result
+true_min <- all_results[[paste0(names(variants)[1], "_min")]]$true_opt
+true_max <- all_results[[paste0(names(variants)[1], "_max")]]$true_opt
+
+print_summary_table("MINIMIZATION RESULTS", "min", true_min)
+print_summary_table("MAXIMIZATION RESULTS", "max", true_max)
+
+# Print detailed results
+cat("\n==============================================\n")
+cat("DETAILED RESULTS\n")
+cat("==============================================\n")
+
+for (direction in c("min", "max")) {
+  direction_label <- if (direction == "min") "MINIMIZATION" else "MAXIMIZATION"
+  cat("\n", direction_label, "\n", sep = "")
+
+  for (variant_name in names(variants)) {
+    key <- paste0(variant_name, "_", direction)
+    res <- all_results[[key]]
+
+    cat("  ", variant_name, ":\n", sep = "")
+    cat("    Found (mean/sd): ", sprintf("%.6f / %.6f", res$fopt_mean, res$fopt_sd), "\n")
+    if (!is.na(res$rMSE)) {
+      cat("    rMSE:            ", sprintf("%.6f", res$rMSE), "\n")
+    }
+    cat("    Time (mean/sd):  ", sprintf("%.3fs / %.3fs", res$time_avg, res$time_sd), "\n")
+  }
+}
+
+cat("\n==============================================\n")
 cat("Benchmark complete.\n")
+cat("\nVariant guide:\n")
+cat("  SMCO:    Base algorithm - fastest, good for initial exploration\n")
+cat("  SMCO_R:  With refinement - balanced speed and accuracy\n")
+cat("  SMCO_BR: Boosted refinement - highest accuracy, more compute\n")

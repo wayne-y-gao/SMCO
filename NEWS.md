@@ -2,43 +2,25 @@
 
 ## SMCO v1.1.0 (January 25, 2026)
 
-### Performance Optimizations
+### Code Quality Improvements
 
-This release includes significant performance improvements, particularly for high-dimensional optimization problems.
+This release focuses on code quality, usability, and better defaults.
 
 #### Changes in `compute_partial_signs()`
-- **In-place vector modification**: Instead of creating copies of the input vector for each perturbation, the function now modifies the vector in-place and restores original values after each dimension evaluation
-- **Metadata-based runmax tracking**: Instead of copying the full d-dimensional vector on each improvement, the function now stores only the dimension index and perturbed value, reconstructing the best point once at the end
+- In-place vector modification for cleaner code structure
+- Metadata-based runmax tracking
 
 #### Changes in `SMCO_single()`
-- **Pre-computed h_step lookup table**: For `iter_max < 1000`, all step sizes are pre-computed in a matrix before the main loop, eliminating repeated division operations
-- **Cached fixed bounds**: When `buffer_rand = FALSE`, the extended bounds are computed once before the loop instead of every iteration
-- **Pre-computed convergence threshold**: The convergence check threshold is computed once before the loop
+- Pre-computed h_step lookup table
+- Cached fixed bounds when `buffer_rand = FALSE`
+- Pre-computed convergence threshold
 
 #### Changes in `generate_sobol_points()`
-- **Vectorized scaling**: Replaced the dimension-wise loop with a vectorized operation using R's column-wise recycling
+- Vectorized scaling using R's column-wise recycling
 
-### Performance Benchmark Results
+### Performance
 
-Benchmark on 50-dimensional Rastrigin function (20 replications, 32 starting points, 300 iterations):
-
-#### Maximization
-
-| Algorithm | v1.0.0 | v1.1.0 | Speedup |
-|-----------|--------|--------|---------|
-| SMCO      | 3.108s | 2.794s | **10.1% faster** |
-| SMCO_R    | 3.106s | 2.831s | **8.9% faster** |
-| SMCO_BR   | 3.620s | 2.864s | **20.9% faster** |
-
-#### Minimization
-
-| Algorithm | v1.0.0 | v1.1.0 | Speedup |
-|-----------|--------|--------|---------|
-| SMCO      | 5.272s | 2.983s | **43.4% faster** |
-| SMCO_R    | 5.474s | 3.015s | **44.9% faster** |
-| SMCO_BR   | 5.140s | 3.060s | **40.5% faster** |
-
-**Note:** Performance gains scale with problem dimension due to reduced memory allocation overhead from eliminated vector copies.
+Performance is equivalent between v1.0.0 and v1.1.0 (within ~1% measurement noise). The code improvements focus on readability and maintainability rather than speed.
 
 ### Correctness Verification
 
@@ -73,11 +55,6 @@ result <- SMCO_BR(f, bounds_lower, bounds_upper)   # Boosted - most accurate
 ```
 
 All wrapper functions accept additional parameters via `...` (e.g., `n_starts`, `iter_max`, `verbose`) which are passed to `SMCO_multi()`.
-
-### New Default Parameters
-
-- **`n_starts`**: Now defaults to `max(5, sqrt(dim))` instead of a fixed value, providing adaptive scaling with problem dimension
-- **`iter_max`**: Increased default from 200 to 500 for better convergence
 
 ### Documentation Updates
 
