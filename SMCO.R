@@ -16,22 +16,43 @@
 
 # This Rscript is a self-contained R Implementation of the SMCO Algorithm
 #
-# This Rscript contains the following functions:
-
+# ALGORITHM VARIANTS
+# ==================
+#
+# 1. SMCO (Basic) - Single-phase optimization
+#    - Best for: Quick exploration, simple problems
+#    - Call: SMCO(f, bounds_lower, bounds_upper)
+#
+# 2. SMCO_R (Refinement) - Two-phase: exploration + local refinement
+#    - Best for: Problems where local optimization matters
+#    - Call: SMCO_R(f, bounds_lower, bounds_upper)
+#
+# 3. SMCO_BR (Boosted Refinement) - Regular + boosted searches
+#    - Best for: Challenging multimodal problems, high accuracy
+#    - Call: SMCO_BR(f, bounds_lower, bounds_upper)
+#
+# SMCO_multi() provides full control over all parameters.
+#
+# FUNCTIONS IN THIS FILE
+# ======================
+#
+# Convenience wrapper functions:
+# (1) "SMCO": basic algorithm (refine_search=FALSE, iter_boost=0)
+# (2) "SMCO_R": with refinement (refine_search=TRUE, iter_boost=0)
+# (3) "SMCO_BR": boosted refinement (refine_search=TRUE, iter_boost>0)
+#
 # Core optimizer functions:
-# (1) "SMCO_single": executes the basic iterations of the SMCO algorithm
-# (2) "SMCO_single_refine": calls SMCO_single to run refined search (with options)
-# (3) "SMCO_single_boost": calls SMCO_refine to run additional boosted search (with ptions)
-# (4) "SMCO_multi": runs SMCO_single_boost from multiple starting points and return the best result
-#     Note: The options/arguments of the SMCO functions can be set to implement the raw "SMCO_single" algorithm
-#           without additional refinement/boosting.
-
+# (4) "SMCO_multi": runs SMCO from multiple starting points (full parameter control)
+# (5) "SMCO_single": executes the basic iterations of the SMCO algorithm
+# (6) "SMCO_single_refine": calls SMCO_single to run refined search (with options)
+# (7) "SMCO_single_boost": calls SMCO_refine to run additional boosted search (with options)
+#
 # Helper functions:
-# (5) "generate_sobol_points": generate multiple Sobol starting points
-# (6) "check_bounds": check and enforce bound constraints
-# (7) "compute_partial_signs": compute partial finite differences used in the SMCO algorithm
-# (8) "validate_smco_inputs": validate inputs to SMCO_multi
-
+# (8) "generate_sobol_points": generate multiple Sobol starting points
+# (9) "check_bounds": check and enforce bound constraints
+# (10) "compute_partial_signs": compute partial finite differences used in the SMCO algorithm
+# (11) "validate_smco_inputs": validate inputs to SMCO_multi
+#
 # Example usage at the end of Rscript
 
 #####################################
@@ -603,6 +624,37 @@ SMCO_multi <- function(f, bounds_lower, bounds_upper, start_points = NULL,
     ))
 }
 
+#####################################
+# Convenience wrapper functions for SMCO variants
+#####################################
+
+# SMCO - Basic algorithm (refine_search=FALSE, iter_boost=0)
+SMCO <- function(f, bounds_lower, bounds_upper, start_points = NULL, ...) {
+  user_control <- list(...)
+  user_control$refine_search <- FALSE
+  user_control$iter_boost <- 0
+  SMCO_multi(f, bounds_lower, bounds_upper, start_points, opt_control = user_control)
+}
+
+# SMCO_R - With refinement (refine_search=TRUE, iter_boost=0)
+SMCO_R <- function(f, bounds_lower, bounds_upper, start_points = NULL, ...) {
+  user_control <- list(...)
+  user_control$refine_search <- TRUE
+  user_control$iter_boost <- 0
+  if (is.null(user_control$refine_ratio)) user_control$refine_ratio <- 0.5
+  SMCO_multi(f, bounds_lower, bounds_upper, start_points, opt_control = user_control)
+}
+
+# SMCO_BR - Boosted refinement (refine_search=TRUE, iter_boost>0)
+SMCO_BR <- function(f, bounds_lower, bounds_upper, start_points = NULL,
+                    iter_boost = 1000, ...) {
+  user_control <- list(...)
+  user_control$refine_search <- TRUE
+  user_control$iter_boost <- iter_boost
+  if (is.null(user_control$refine_ratio)) user_control$refine_ratio <- 0.5
+  SMCO_multi(f, bounds_lower, bounds_upper, start_points, opt_control = user_control)
+}
+
 # Load the compiler package
 library(compiler)
 
@@ -615,6 +667,9 @@ SMCO_single <- cmpfun(SMCO_single)
 SMCO_single_refine <- cmpfun(SMCO_single_refine)
 SMCO_single_boost <- cmpfun(SMCO_single_boost)
 SMCO_multi <- cmpfun(SMCO_multi)
+SMCO <- cmpfun(SMCO)
+SMCO_R <- cmpfun(SMCO_R)
+SMCO_BR <- cmpfun(SMCO_BR)
 
 
 # Example usage
