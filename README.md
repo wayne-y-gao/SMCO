@@ -12,6 +12,8 @@ R implementation of the SMCO algorithm from:
 
 **Repository maintained by:** Wayne Yuan Gao (waynegao@upenn.edu)
 
+**For paper replication: Use v1.0.0**
+
 ---
 
 ## Overview
