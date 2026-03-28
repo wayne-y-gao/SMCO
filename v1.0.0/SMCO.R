@@ -5,6 +5,9 @@
 # Date: July 15, 2025
 # GitHub Repository Maintained by: Wayne Yuan Gao
 
+# Citation: X. Chen, Z. Chen, W.Y. Gao, X. Yan, & G. Zhang, Optimization via the strategic law of large numbers, Proc. Natl. Acad. Sci. U.S.A. 123 (4) e2519845123, https://doi.org/10.1073/pnas.2519845123 (2026).
+# Use this for reproduction of the numerical results in the publication above.
+
 # This Rscript is a self-contained R Implementation of the SMCO Algorithm
 # This Rscript contains the following functions:
 
